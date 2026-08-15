@@ -53,3 +53,7 @@ Thumbs.db
 .infracost/
 checkov-report*
 trivy-report*
+# Local Terraform backend configuration
+**/backend.hcl
+# Reusable modules inherit provider locks from root modules
+modules/**/.terraform.lock.hcl
