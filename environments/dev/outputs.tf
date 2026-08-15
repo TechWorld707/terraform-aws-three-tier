@@ -47,3 +47,33 @@ output "flow_log_group_name" {
   description = "CloudWatch log group receiving development VPC Flow Logs."
   value       = module.vpc.flow_log_group_name
 }
+
+output "alb_security_group_id" {
+  description = "Security group ID assigned to the development ALB."
+  value       = module.security.alb_security_group_id
+}
+
+output "ecs_security_group_id" {
+  description = "Security group ID assigned to development ECS tasks."
+  value       = module.security.ecs_security_group_id
+}
+
+output "rds_security_group_id" {
+  description = "Security group ID assigned to development RDS."
+  value       = module.security.rds_security_group_id
+}
+
+output "redis_security_group_id" {
+  description = "Security group ID assigned to development Redis."
+  value       = module.security.redis_security_group_id
+}
+
+output "application_kms_key_arn" {
+  description = "ARN of the development application KMS key."
+  value       = module.security.application_kms_key_arn
+}
+
+output "database_credentials_secret_arn" {
+  description = "ARN of the development database credentials secret."
+  value       = module.security.database_credentials_secret_arn
+}

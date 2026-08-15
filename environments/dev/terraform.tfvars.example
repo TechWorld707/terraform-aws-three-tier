@@ -12,3 +12,7 @@ tags = {
   Portfolio = "terraform-aws-three-tier"
   Owner     = "REPLACE_WITH_OWNER"
 }
+
+database_username           = "app"
+kms_deletion_window_days    = 7
+secret_recovery_window_days = 0
