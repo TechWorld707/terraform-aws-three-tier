@@ -80,3 +80,22 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+
+variable "database_username" {
+  description = "Username stored in the development database credentials secret."
+  type        = string
+  default     = "app"
+}
+
+variable "kms_deletion_window_days" {
+  description = "Waiting period before permanent deletion of the development application KMS key."
+  type        = number
+  default     = 7
+}
+
+variable "secret_recovery_window_days" {
+  description = "Recovery window for the development database credentials secret."
+  type        = number
+  default     = 0
+}
