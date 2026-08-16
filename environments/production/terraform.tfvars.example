@@ -1,0 +1,24 @@
+aws_region                 = "us-east-1"
+project_name               = "three-tier-platform"
+environment                = "production"
+vpc_cidr                   = "10.30.0.0/16"
+availability_zone_count    = 2
+enable_nat_gateway         = true
+single_nat_gateway         = false
+enable_flow_logs           = true
+flow_log_retention_days    = 90
+
+tags = {
+  Portfolio = "terraform-aws-three-tier"
+  Owner     = "REPLACE_WITH_OWNER"
+}
+
+database_username           = "app"
+kms_deletion_window_days    = 7
+secret_recovery_window_days = 0
+# ECS application configuration
+ecs_desired_count = 0
+container_image_tag = "bootstrap"
+ecr_force_delete = false
+# Optional SNS email alerts
+alarm_email = null
