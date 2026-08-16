@@ -77,3 +77,33 @@ output "database_credentials_secret_arn" {
   description = "ARN of the development database credentials secret."
   value       = module.security.database_credentials_secret_arn
 }
+
+output "ecr_repository_name" {
+  description = "Name of the development application ECR repository."
+  value       = module.ecs.ecr_repository_name
+}
+
+output "ecr_repository_url" {
+  description = "URL of the development application ECR repository."
+  value       = module.ecs.ecr_repository_url
+}
+
+output "ecs_cluster_name" {
+  description = "Name of the development ECS cluster."
+  value       = module.ecs.ecs_cluster_name
+}
+
+output "ecs_service_name" {
+  description = "Name of the development ECS service."
+  value       = module.ecs.ecs_service_name
+}
+
+output "application_load_balancer_dns_name" {
+  description = "Public DNS name of the development Application Load Balancer."
+  value       = module.ecs.load_balancer_dns_name
+}
+
+output "application_log_group_name" {
+  description = "CloudWatch log group used by the application."
+  value       = module.ecs.application_log_group_name
+}
