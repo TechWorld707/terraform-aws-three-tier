@@ -1,6 +1,10 @@
 data "aws_caller_identity" "current" {}
 
 data "aws_iam_policy_document" "application_kms" {
+  #checkov:skip=CKV_AWS_109:KMS key administration is restricted to this AWS account root principal.
+  #checkov:skip=CKV_AWS_111:KMS key administration requires write actions and is restricted to this AWS account root principal.
+  #checkov:skip=CKV_AWS_356:KMS key policies use Resource "*" to represent only the key to which the policy is attached.
+
   statement {
     sid    = "EnableAccountAdministration"
     effect = "Allow"
