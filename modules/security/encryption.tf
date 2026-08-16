@@ -50,3 +50,27 @@ resource "aws_secretsmanager_secret_version" "database_credentials" {
     }
   )
 }
+
+resource "random_password" "redis" {
+  length  = 32
+  special = true
+
+  override_special = "!&#$^<>-"
+}
+
+resource "aws_secretsmanager_secret" "redis_credentials" {
+  name                    = "${var.name}/redis/credentials"
+  description             = "Redis authentication credentials for ${var.name}"
+  kms_key_id              = aws_kms_key.application.arn
+  recovery_window_in_days = var.secret_recovery_window_days
+
+  tags = local.common_tags
+}
+
+resource "aws_secretsmanager_secret_version" "redis_credentials" {
+  secret_id = aws_secretsmanager_secret.redis_credentials.id
+
+  secret_string = jsonencode({
+    auth_token = random_password.redis.result
+  })
+}

@@ -67,7 +67,6 @@ module "security" {
 
   tags = local.common_tags
 }
-
 module "ecs" {
   source = "../../modules/ecs"
 
@@ -98,13 +97,94 @@ module "ecs" {
     AWS_REGION = var.aws_region
   }
 
-  # These will be populated after creating RDS, Redis and application S3.
+  # Complete connection secrets will be added after the data endpoints exist.
   container_secrets = {}
-  s3_bucket_arns    = []
 
   kms_key_arns = [
     module.security.application_kms_key_arn
   ]
+
+  s3_bucket_arns = [
+    module.storage.bucket_arn
+  ]
+
+  tags = local.common_tags
+}
+
+
+module "rds" {
+  source = "../../modules/rds"
+
+  name = "${var.project_name}-${var.environment}-postgres"
+
+  database_name     = "profiles"
+  database_username = module.security.database_username
+  database_password = module.security.database_password
+
+  database_subnet_ids = module.vpc.isolated_database_subnet_ids
+  security_group_id   = module.security.rds_security_group_id
+  kms_key_arn         = module.security.application_kms_key_arn
+
+  engine_version         = "17"
+  parameter_group_family = "postgres17"
+  instance_class         = "db.t4g.micro"
+
+  allocated_storage     = 20
+  max_allocated_storage = 50
+  storage_type          = "gp3"
+
+  multi_az              = false
+  backup_retention_days = 1
+  deletion_protection   = false
+  skip_final_snapshot   = true
+  apply_immediately     = true
+
+  performance_insights_enabled = false
+  monitoring_interval          = 0
+  log_retention_days           = 30
+
+  tags = local.common_tags
+}
+
+module "redis" {
+  source = "../../modules/redis"
+
+  name = "${var.project_name}-${var.environment}-redis"
+
+  subnet_ids        = module.vpc.isolated_database_subnet_ids
+  security_group_id = module.security.redis_security_group_id
+  kms_key_arn       = module.security.application_kms_key_arn
+  auth_token        = module.security.redis_auth_token
+
+  engine_version         = "7.1"
+  parameter_group_family = "redis7"
+  node_type              = "cache.t4g.micro"
+
+  num_cache_clusters         = 1
+  automatic_failover_enabled = false
+  multi_az_enabled           = false
+
+  snapshot_retention_limit   = 0
+  apply_immediately          = true
+  auto_minor_version_upgrade = true
+  log_retention_days         = 30
+
+  tags = local.common_tags
+}
+
+module "storage" {
+  source = "../../modules/storage"
+
+  name        = "${var.project_name}-${var.environment}"
+  kms_key_arn = module.security.application_kms_key_arn
+
+  # Development resources must support controlled teardown.
+  force_destroy      = true
+  versioning_enabled = true
+
+  object_expiration_days                 = 90
+  noncurrent_version_expiration_days     = 30
+  abort_incomplete_multipart_upload_days = 7
 
   tags = local.common_tags
 }
