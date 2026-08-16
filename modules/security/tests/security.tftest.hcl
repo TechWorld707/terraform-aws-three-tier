@@ -1,4 +1,19 @@
-mock_provider "aws" {}
+
+mock_provider "aws" {
+  mock_data "aws_caller_identity" {
+    defaults = {
+      account_id = "123456789012"
+      arn        = "arn:aws:iam::123456789012:user/terraform-test"
+      user_id    = "AIDATESTUSER"
+    }
+  }
+
+  mock_data "aws_iam_policy_document" {
+    defaults = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"kms:*\"],\"Resource\":[\"*\"]}]}"
+    }
+  }
+}
 
 mock_provider "random" {}
 
