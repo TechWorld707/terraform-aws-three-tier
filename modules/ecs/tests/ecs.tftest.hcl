@@ -60,9 +60,13 @@ variables {
     AWS_REGION = "us-east-1"
   }
 
-  container_secrets = {}
-  kms_key_arns      = []
-  s3_bucket_arns    = []
+  container_secrets = {
+    DATABASE_URL = "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-platform-dev/application/runtime-AbCdEf:DATABASE_URL::"
+    REDIS_URL    = "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-platform-dev/application/runtime-AbCdEf:REDIS_URL::"
+  }
+
+  kms_key_arns   = []
+  s3_bucket_arns = []
 
   tags = {
     Environment = "test"
