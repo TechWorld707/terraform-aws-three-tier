@@ -72,3 +72,13 @@ output "application_log_group_name" {
   description = "CloudWatch log group receiving application container logs."
   value       = aws_cloudwatch_log_group.application.name
 }
+
+output "load_balancer_arn_suffix" {
+  description = "ARN suffix used by Application Load Balancer CloudWatch metrics."
+  value       = aws_lb.application.arn_suffix
+}
+
+output "target_group_arn_suffix" {
+  description = "ARN suffix used by target-group CloudWatch metrics."
+  value       = aws_lb_target_group.application.arn_suffix
+}

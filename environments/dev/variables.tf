@@ -133,3 +133,23 @@ variable "container_image_tag" {
     error_message = "container_image_tag must be a valid Docker image tag."
   }
 }
+
+variable "alarm_email" {
+  description = "Optional email address receiving development alarm notifications."
+  type        = string
+  default     = null
+  nullable    = true
+  sensitive   = true
+
+  validation {
+    condition = (
+      var.alarm_email == null ||
+      can(regex(
+        "^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$",
+        var.alarm_email
+      ))
+    )
+
+    error_message = "alarm_email must be null or a valid email address."
+  }
+}
