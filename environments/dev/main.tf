@@ -128,8 +128,63 @@ module "edge" {
   waf_rate_limit      = 1000
 
   # CloudFront supplies a generated HTTPS hostname until a domain is added.
-  domain_name        = null
+  domain_name         = null
   acm_certificate_arn = null
+
+  tags = local.common_tags
+}
+
+module "monitoring" {
+  source = "../../modules/monitoring"
+
+  name        = "${var.project_name}-${var.environment}"
+  aws_region  = var.aws_region
+  alarm_email = var.alarm_email
+
+  ecs_cluster_name = module.ecs.ecs_cluster_name
+  ecs_service_name = module.ecs.ecs_service_name
+
+  load_balancer_arn_suffix = module.ecs.load_balancer_arn_suffix
+  target_group_arn_suffix  = module.ecs.target_group_arn_suffix
+
+  rds_instance_id            = module.rds.db_instance_id
+  redis_replication_group_id = module.redis.replication_group_id
+
+  ecs_cpu_threshold    = 80
+  ecs_memory_threshold = 80
+
+  rds_cpu_threshold                = 80
+  rds_free_storage_threshold_bytes = 2147483648
+
+  redis_cpu_threshold               = 80
+  redis_free_memory_threshold_bytes = 52428800
+
+  alb_5xx_threshold        = 5
+  alarm_evaluation_periods = 2
+
+  tags = local.common_tags
+}
+
+module "backup" {
+  source = "../../modules/backup"
+
+  name        = "${var.project_name}-${var.environment}"
+  kms_key_arn = module.security.application_kms_key_arn
+
+  resource_arns = [
+    module.rds.db_instance_arn,
+    module.storage.bucket_arn
+  ]
+
+  schedule_expression       = "cron(0 5 * * ? *)"
+  start_window_minutes      = 60
+  completion_window_minutes = 180
+  delete_after_days         = 7
+
+  enable_continuous_backup = false
+  enable_vault_lock        = false
+
+  vault_lock_min_retention_days = 7
 
   tags = local.common_tags
 }

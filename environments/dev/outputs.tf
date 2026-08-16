@@ -187,3 +187,28 @@ output "waf_web_acl_arn" {
   description = "ARN of the CloudFront WAF web ACL."
   value       = module.edge.waf_web_acl_arn
 }
+
+output "cloudwatch_dashboard_name" {
+  description = "Name of the development operations dashboard."
+  value       = module.monitoring.dashboard_name
+}
+
+output "alarm_sns_topic_arn" {
+  description = "ARN of the development alarm SNS topic."
+  value       = module.monitoring.sns_topic_arn
+}
+
+output "cloudwatch_alarm_names" {
+  description = "Names of the development CloudWatch alarms."
+  value       = module.monitoring.alarm_names
+}
+
+output "backup_vault_name" {
+  description = "Name of the development AWS Backup vault."
+  value       = module.backup.backup_vault_name
+}
+
+output "backup_plan_id" {
+  description = "ID of the development AWS Backup plan."
+  value       = module.backup.backup_plan_id
+}

@@ -20,3 +20,5 @@ secret_recovery_window_days = 0
 ecs_desired_count = 0
 container_image_tag = "bootstrap"
 ecr_force_delete = false
+# Optional SNS email alerts
+alarm_email = null
