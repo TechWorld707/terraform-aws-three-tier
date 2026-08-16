@@ -152,3 +152,13 @@ output "submission_bucket_s3_uri" {
   description = "S3 URI of the development submission archive bucket."
   value       = module.storage.s3_uri
 }
+
+output "application_runtime_secret_arn" {
+  description = "ARN of the application runtime configuration secret."
+  value       = module.runtime.runtime_secret_arn
+}
+
+output "application_runtime_secret_name" {
+  description = "Name of the application runtime configuration secret."
+  value       = module.runtime.runtime_secret_name
+}

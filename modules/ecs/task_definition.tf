@@ -1,3 +1,5 @@
+data "aws_region" "current" {}
+
 resource "aws_cloudwatch_log_group" "application" {
   name              = "/aws/ecs/${var.name}/application"
   retention_in_days = var.log_retention_days
@@ -21,6 +23,10 @@ resource "aws_ecs_task_definition" "application" {
     cpu_architecture        = "X86_64"
   }
 
+  volume {
+    name = "application-tmp"
+  }
+
   container_definitions = jsonencode([
     {
       name      = "application"
@@ -37,6 +43,14 @@ resource "aws_ecs_task_definition" "application" {
           hostPort      = var.container_port
           protocol      = "tcp"
           appProtocol   = "http"
+        }
+      ]
+
+      mountPoints = [
+        {
+          sourceVolume  = "application-tmp"
+          containerPath = "/tmp"
+          readOnly      = false
         }
       ]
 
@@ -90,5 +104,3 @@ resource "aws_ecs_task_definition" "application" {
     create_before_destroy = true
   }
 }
-
-data "aws_region" "current" {}

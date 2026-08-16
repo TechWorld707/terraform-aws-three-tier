@@ -46,7 +46,7 @@ data "aws_iam_policy_document" "task_execution_secrets" {
       "secretsmanager:GetSecretValue"
     ]
 
-    resources = toset(values(var.container_secrets))
+    resources = local.container_secret_arns
   }
 }
 

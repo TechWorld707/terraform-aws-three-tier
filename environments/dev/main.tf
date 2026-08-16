@@ -94,11 +94,13 @@ module "ecs" {
   ecr_kms_key_arn  = module.security.application_kms_key_arn
 
   container_environment = {
-    AWS_REGION = var.aws_region
+    AWS_REGION     = var.aws_region
+    S3_BUCKET      = module.storage.bucket_name
+    S3_KMS_KEY_ARN = module.security.application_kms_key_arn
   }
 
-  # Complete connection secrets will be added after the data endpoints exist.
-  container_secrets = {}
+  container_secrets = module.runtime.ecs_container_secrets
+
 
   kms_key_arns = [
     module.security.application_kms_key_arn
@@ -185,6 +187,30 @@ module "storage" {
   object_expiration_days                 = 90
   noncurrent_version_expiration_days     = 30
   abort_incomplete_multipart_upload_days = 7
+
+  tags = local.common_tags
+}
+
+module "runtime" {
+  source = "../../modules/runtime"
+
+  name        = "${var.project_name}-${var.environment}"
+  kms_key_arn = module.security.application_kms_key_arn
+
+  secret_recovery_window_days = 0
+
+  database_host     = module.rds.db_instance_address
+  database_port     = module.rds.db_instance_port
+  database_name     = module.rds.database_name
+  database_username = module.security.database_username
+  database_password = module.security.database_password
+
+  redis_host       = module.redis.primary_endpoint_address
+  redis_port       = module.redis.port
+  redis_auth_token = module.security.redis_auth_token
+
+  s3_bucket_name = module.storage.bucket_name
+  aws_region     = var.aws_region
 
   tags = local.common_tags
 }

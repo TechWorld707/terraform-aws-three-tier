@@ -6,6 +6,11 @@ locals {
       Module    = "ecs"
     }
   )
+
+  container_secret_arns = toset([
+    for secret_reference in values(var.container_secrets) :
+    replace(secret_reference, "/:[^:]+::$/", "")
+  ])
 }
 
 resource "aws_ecs_cluster" "this" {
