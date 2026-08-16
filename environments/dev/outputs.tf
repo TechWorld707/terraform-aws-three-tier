@@ -162,3 +162,28 @@ output "application_runtime_secret_name" {
   description = "Name of the application runtime configuration secret."
   value       = module.runtime.runtime_secret_name
 }
+
+output "application_url" {
+  description = "Public HTTPS URL of the development application."
+  value       = module.edge.application_url
+}
+
+output "cloudfront_distribution_id" {
+  description = "ID of the development CloudFront distribution."
+  value       = module.edge.cloudfront_distribution_id
+}
+
+output "cloudfront_domain_name" {
+  description = "Generated development CloudFront hostname."
+  value       = module.edge.cloudfront_domain_name
+}
+
+output "frontend_bucket_name" {
+  description = "Private bucket containing the static frontend."
+  value       = module.edge.frontend_bucket_name
+}
+
+output "waf_web_acl_arn" {
+  description = "ARN of the CloudFront WAF web ACL."
+  value       = module.edge.waf_web_acl_arn
+}

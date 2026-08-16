@@ -113,6 +113,26 @@ module "ecs" {
   tags = local.common_tags
 }
 
+module "edge" {
+  source = "../../modules/edge"
+
+  name            = "${var.project_name}-${var.environment}"
+  alb_domain_name = module.ecs.load_balancer_dns_name
+
+  frontend_source_directory = "${path.root}/../../frontend"
+  frontend_force_destroy    = true
+
+  default_root_object = "index.html"
+  price_class         = "PriceClass_100"
+  enable_ipv6         = true
+  waf_rate_limit      = 1000
+
+  # CloudFront supplies a generated HTTPS hostname until a domain is added.
+  domain_name        = null
+  acm_certificate_arn = null
+
+  tags = local.common_tags
+}
 
 module "rds" {
   source = "../../modules/rds"
