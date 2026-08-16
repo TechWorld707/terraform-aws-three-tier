@@ -99,3 +99,37 @@ variable "secret_recovery_window_days" {
   type        = number
   default     = 0
 }
+
+variable "ecr_force_delete" {
+  description = "Allow Terraform to delete the development ECR repository when it contains images."
+  type        = bool
+  default     = false
+}
+
+variable "ecs_desired_count" {
+  description = "Number of ECS application tasks to run."
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = var.ecs_desired_count >= 0 && var.ecs_desired_count <= 10
+    error_message = "ecs_desired_count must be between 0 and 10."
+  }
+}
+
+variable "container_image_tag" {
+  description = "Immutable container image tag deployed to ECS."
+  type        = string
+  default     = "bootstrap"
+
+  validation {
+    condition = can(
+      regex(
+        "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+        var.container_image_tag
+      )
+    )
+
+    error_message = "container_image_tag must be a valid Docker image tag."
+  }
+}

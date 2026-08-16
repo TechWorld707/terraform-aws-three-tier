@@ -16,3 +16,7 @@ tags = {
 database_username           = "app"
 kms_deletion_window_days    = 7
 secret_recovery_window_days = 0
+# ECS application configuration
+ecs_desired_count = 0
+container_image_tag = "bootstrap"
+ecr_force_delete = false

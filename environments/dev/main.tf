@@ -67,3 +67,44 @@ module "security" {
 
   tags = local.common_tags
 }
+
+module "ecs" {
+  source = "../../modules/ecs"
+
+  name   = "${var.project_name}-${var.environment}"
+  vpc_id = module.vpc.vpc_id
+
+  public_subnet_ids  = module.vpc.public_subnet_ids
+  private_subnet_ids = module.vpc.private_application_subnet_ids
+
+  alb_security_group_id = module.security.alb_security_group_id
+  ecs_security_group_id = module.security.ecs_security_group_id
+
+  container_port = 8080
+  image_tag      = var.container_image_tag
+  desired_count  = var.ecs_desired_count
+
+  task_cpu    = 256
+  task_memory = 512
+
+  health_check_path      = "/health"
+  log_retention_days     = 30
+  enable_execute_command = true
+
+  ecr_force_delete = var.ecr_force_delete
+  ecr_kms_key_arn  = module.security.application_kms_key_arn
+
+  container_environment = {
+    AWS_REGION = var.aws_region
+  }
+
+  # These will be populated after creating RDS, Redis and application S3.
+  container_secrets = {}
+  s3_bucket_arns    = []
+
+  kms_key_arns = [
+    module.security.application_kms_key_arn
+  ]
+
+  tags = local.common_tags
+}
