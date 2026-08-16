@@ -48,3 +48,19 @@ output "database_password" {
   value       = random_password.database.result
   sensitive   = true
 }
+
+output "redis_credentials_secret_arn" {
+  description = "ARN of the Secrets Manager secret containing the Redis authentication token."
+  value       = aws_secretsmanager_secret.redis_credentials.arn
+}
+
+output "redis_credentials_secret_name" {
+  description = "Name of the Redis authentication secret."
+  value       = aws_secretsmanager_secret.redis_credentials.name
+}
+
+output "redis_auth_token" {
+  description = "Generated Redis authentication token."
+  value       = random_password.redis.result
+  sensitive   = true
+}

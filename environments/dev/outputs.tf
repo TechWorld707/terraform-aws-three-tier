@@ -107,3 +107,48 @@ output "application_log_group_name" {
   description = "CloudWatch log group used by the application."
   value       = module.ecs.application_log_group_name
 }
+
+output "rds_instance_id" {
+  description = "Development RDS PostgreSQL instance identifier."
+  value       = module.rds.db_instance_id
+}
+
+output "rds_endpoint" {
+  description = "Private development RDS endpoint."
+  value       = module.rds.db_instance_endpoint
+}
+
+output "rds_database_name" {
+  description = "Development PostgreSQL database name."
+  value       = module.rds.database_name
+}
+
+output "redis_replication_group_id" {
+  description = "Development Redis replication-group identifier."
+  value       = module.redis.replication_group_id
+}
+
+output "redis_primary_endpoint" {
+  description = "Private development Redis primary endpoint."
+  value       = module.redis.primary_endpoint_address
+}
+
+output "redis_port" {
+  description = "Development Redis listener port."
+  value       = module.redis.port
+}
+
+output "submission_bucket_name" {
+  description = "Development application submission archive bucket."
+  value       = module.storage.bucket_name
+}
+
+output "submission_bucket_arn" {
+  description = "ARN of the development submission archive bucket."
+  value       = module.storage.bucket_arn
+}
+
+output "submission_bucket_s3_uri" {
+  description = "S3 URI of the development submission archive bucket."
+  value       = module.storage.s3_uri
+}
