@@ -100,8 +100,9 @@ resource "aws_wafv2_web_acl" "cloudfront" {
   tags = local.common_tags
 }
 
-#checkov:skip=CKV_AWS_338:WAF log retention is configurable by environment to balance security visibility and development cost.
+
 resource "aws_cloudwatch_log_group" "waf" {
+  #checkov:skip=CKV_AWS_338:WAF log retention is configurable by environment to balance security visibility and development cost.
   name              = "aws-waf-logs-${var.name}-cloudfront"
   retention_in_days = var.waf_log_retention_days
   kms_key_id        = var.kms_key_arn
