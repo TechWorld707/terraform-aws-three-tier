@@ -42,6 +42,9 @@ resource "aws_db_parameter_group" "this" {
   }
 }
 
+
+
+#checkov:skip=CKV_AWS_338:Log retention is configurable by environment; production uses the approved retention period while development uses a shorter cost-controlled period.
 resource "aws_cloudwatch_log_group" "rds" {
   for_each = var.log_exports
 
@@ -88,6 +91,8 @@ resource "aws_iam_role_policy_attachment" "enhanced_monitoring" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }
 
+#checkov:skip=CKV_AWS_157:Multi-AZ is configurable by environment; production enables it while development uses single-AZ for cost control.
+#checkov:skip=CKV_AWS_353:Performance Insights is configurable because enabling it may add cost; CloudWatch metrics and database logs remain available.
 resource "aws_db_instance" "this" {
   identifier = var.name
 

@@ -1,3 +1,5 @@
+#checkov:skip=CKV_AWS_150:ALB deletion protection is disabled to support controlled teardown of temporary learning environments.
+#checkov:skip=CKV_AWS_91:ALB access logging is deferred until a dedicated centralized log-archive bucket is implemented.
 resource "aws_lb" "application" {
   name                       = substr("${var.name}-alb", 0, 32)
   internal                   = false
@@ -48,7 +50,7 @@ resource "aws_lb_target_group" "application" {
     create_before_destroy = true
   }
 }
-
+#checkov:skip=CKV_AWS_2:CloudFront provides public HTTPS; ALB HTTPS will be enabled after a domain and ACM certificate are configured.
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.application.arn
   port              = 80

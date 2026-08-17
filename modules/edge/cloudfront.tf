@@ -109,6 +109,9 @@ resource "aws_cloudfront_response_headers_policy" "security" {
   }
 }
 
+#checkov:skip=CKV_AWS_310:Origin failover requires duplicate origins and is deferred because this portfolio environment uses one frontend bucket and one application ALB.
+#checkov:skip=CKV_AWS_374:The application is intentionally globally available; geographic restrictions are not a project requirement.
+#checkov:skip=CKV_AWS_86:CloudFront standard access logging is deferred until a dedicated centralized log-archive bucket is implemented; WAF logging remains enabled.
 resource "aws_cloudfront_distribution" "this" {
   enabled         = true
   is_ipv6_enabled = var.enable_ipv6
