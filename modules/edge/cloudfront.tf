@@ -76,6 +76,39 @@ resource "aws_cloudfront_origin_request_policy" "api" {
   }
 }
 
+resource "aws_cloudfront_response_headers_policy" "security" {
+  name = substr("${var.name}-security-headers", 0, 128)
+
+  security_headers_config {
+    content_type_options {
+      override = true
+    }
+
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+
+    strict_transport_security {
+      access_control_max_age_sec = 31536000
+      include_subdomains         = true
+      override                   = true
+      preload                    = true
+    }
+
+    xss_protection {
+      mode_block = true
+      override   = true
+      protection = true
+    }
+  }
+}
+
 resource "aws_cloudfront_distribution" "this" {
   enabled         = true
   is_ipv6_enabled = var.enable_ipv6
@@ -108,9 +141,11 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   default_cache_behavior {
-    target_origin_id       = "frontend-s3"
-    viewer_protocol_policy = "redirect-to-https"
-    compress               = true
+    target_origin_id           = "frontend-s3"
+    viewer_protocol_policy     = "redirect-to-https"
+    compress                   = true
+    cache_policy_id            = aws_cloudfront_cache_policy.frontend.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
 
     allowed_methods = [
       "GET",
@@ -122,15 +157,16 @@ resource "aws_cloudfront_distribution" "this" {
       "GET",
       "HEAD"
     ]
-
-    cache_policy_id = aws_cloudfront_cache_policy.frontend.id
   }
 
   ordered_cache_behavior {
-    path_pattern           = "/api/*"
-    target_origin_id       = "application-alb"
-    viewer_protocol_policy = "https-only"
-    compress               = true
+    path_pattern               = "/api/*"
+    target_origin_id           = "application-alb"
+    viewer_protocol_policy     = "https-only"
+    compress                   = true
+    cache_policy_id            = aws_cloudfront_cache_policy.api.id
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.api.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
 
     allowed_methods = [
       "DELETE",
@@ -146,9 +182,6 @@ resource "aws_cloudfront_distribution" "this" {
       "GET",
       "HEAD"
     ]
-
-    cache_policy_id          = aws_cloudfront_cache_policy.api.id
-    origin_request_policy_id = aws_cloudfront_origin_request_policy.api.id
   }
 
   restrictions {

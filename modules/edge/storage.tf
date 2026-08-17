@@ -41,8 +41,11 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      kms_master_key_id = var.kms_key_arn
+      sse_algorithm     = "aws:kms"
     }
+
+    bucket_key_enabled = true
   }
 }
 
@@ -56,7 +59,8 @@ resource "aws_s3_object" "frontend" {
   source_hash  = filemd5("${var.frontend_source_directory}/${each.key}")
   content_type = each.value
 
-  server_side_encryption = "AES256"
+  server_side_encryption = "aws:kms"
+  kms_key_id             = var.kms_key_arn
 
   depends_on = [
     aws_s3_bucket_ownership_controls.frontend,

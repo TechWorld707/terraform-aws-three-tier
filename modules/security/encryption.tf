@@ -1,4 +1,6 @@
 data "aws_caller_identity" "current" {}
+data "aws_partition" "current" {}
+data "aws_region" "current" {}
 
 data "aws_iam_policy_document" "application_kms" {
   #checkov:skip=CKV_AWS_109:KMS key administration is restricted to this AWS account root principal.
@@ -19,6 +21,38 @@ data "aws_iam_policy_document" "application_kms" {
 
     actions   = ["kms:*"]
     resources = ["*"]
+  }
+
+  statement {
+    sid    = "AllowCloudWatchLogsEncryption"
+    effect = "Allow"
+
+    principals {
+      type = "Service"
+
+      identifiers = [
+        "logs.${data.aws_region.current.region}.${data.aws_partition.current.dns_suffix}"
+      ]
+    }
+
+    actions = [
+      "kms:Decrypt",
+      "kms:DescribeKey",
+      "kms:Encrypt",
+      "kms:GenerateDataKey*",
+      "kms:ReEncrypt*"
+    ]
+
+    resources = ["*"]
+
+    condition {
+      test     = "ArnLike"
+      variable = "kms:EncryptionContext:aws:logs:arn"
+
+      values = [
+        "arn:${data.aws_partition.current.partition}:logs:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:log-group:*"
+      ]
+    }
   }
 }
 
