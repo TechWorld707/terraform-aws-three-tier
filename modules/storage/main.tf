@@ -70,7 +70,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "submissions" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "submissions" {
-  bucket = aws_s3_bucket.submissions.id
+   #checkov:skip=CKV_AWS_300:The configuration below already aborts incomplete multipart uploads using a validated variable; this finding is a static-analysis false positive.
+   bucket = aws_s3_bucket.submissions.id
 
   rule {
     id     = "submission-archive-retention"

@@ -28,6 +28,7 @@ resource "aws_elasticache_parameter_group" "this" {
 }
 
 resource "aws_cloudwatch_log_group" "redis" {
+  #checkov:skip=CKV_AWS_338:Redis log retention is configurable by environment to balance operational visibility and development cost.
   for_each = toset([
     "engine-log",
     "slow-log"

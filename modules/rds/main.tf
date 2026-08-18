@@ -92,6 +92,9 @@ resource "aws_iam_role_policy_attachment" "enhanced_monitoring" {
 resource "aws_db_instance" "this" {
   #checkov:skip=CKV_AWS_157:Multi-AZ is configurable by environment; production enables it while development uses single-AZ for cost control.
   #checkov:skip=CKV_AWS_353:Performance Insights is configurable because enabling it may add cost; CloudWatch metrics and database logs remain available.
+  #checkov:skip=CKV_AWS_293:Deletion protection is configurable by environment; production enables it while temporary environments permit controlled teardown.
+  #checkov:skip=CKV_AWS_118:Enhanced monitoring is configurable because it requires an additional IAM role and can add monitoring cost.
+
   identifier = var.name
 
   engine         = "postgres"
