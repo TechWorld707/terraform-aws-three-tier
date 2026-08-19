@@ -20,6 +20,7 @@ locals {
 }
 
 resource "aws_security_group" "alb" {
+  #checkov:skip=CKV2_AWS_5:This security group is attached to the Application Load Balancer by the consuming ECS module.
   name                   = "${var.name}-alb"
   description            = "Controls inbound traffic to the public ALB"
   vpc_id                 = var.vpc_id
@@ -35,6 +36,7 @@ resource "aws_security_group" "alb" {
 }
 
 resource "aws_security_group" "ecs" {
+  #checkov:skip=CKV2_AWS_5:This security group is attached to ECS Fargate tasks through the ECS service network configuration.
   name                   = "${var.name}-ecs"
   description            = "Controls traffic to ECS Fargate tasks"
   vpc_id                 = var.vpc_id
@@ -50,6 +52,7 @@ resource "aws_security_group" "ecs" {
 }
 
 resource "aws_security_group" "rds" {
+  #checkov:skip=CKV2_AWS_5:This security group is attached to the RDS instance by the consuming RDS module.
   name                   = "${var.name}-rds"
   description            = "Controls traffic to PostgreSQL"
   vpc_id                 = var.vpc_id
@@ -65,6 +68,7 @@ resource "aws_security_group" "rds" {
 }
 
 resource "aws_security_group" "redis" {
+  #checkov:skip=CKV2_AWS_5:This security group is attached to the ElastiCache replication group by the consuming Redis module.
   name                   = "${var.name}-redis"
   description            = "Controls traffic to ElastiCache Redis"
   vpc_id                 = var.vpc_id

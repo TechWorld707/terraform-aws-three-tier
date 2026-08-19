@@ -1,4 +1,8 @@
+
 resource "aws_s3_bucket" "frontend" {
+  #checkov:skip=CKV2_AWS_62:The static frontend deployment does not require event-driven processing or S3 event notifications.
+  #checkov:skip=CKV_AWS_18:S3 access logging is deferred until a dedicated centralized log-archive bucket is implemented; CloudFront and WAF provide edge-level visibility.
+  #checkov:skip=CKV_AWS_144:Cross-region replication is deferred because this portfolio deployment uses a single region; versioning and lifecycle retention provide local recovery.
   bucket        = local.frontend_bucket_name
   force_destroy = var.frontend_force_destroy
 

@@ -20,13 +20,24 @@ resource "aws_db_subnet_group" "this" {
   )
 }
 
+
 resource "aws_db_parameter_group" "this" {
   name_prefix = "${var.name}-"
   family      = var.parameter_group_family
   description = "PostgreSQL parameters for ${var.name}"
 
+  parameter {
+    name         = "rds.force_ssl"
+    value        = "1"
+    apply_method = "immediate"
+  }
+
   dynamic "parameter" {
-    for_each = var.database_parameters
+    for_each = {
+      for name, value in var.database_parameters :
+      name => value
+      if name != "rds.force_ssl"
+    }
 
     content {
       name         = parameter.key

@@ -1,4 +1,6 @@
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
+  #checkov:skip=CKV_AWS_158:CloudWatch encrypts logs at rest using AWS-managed encryption; a separate customer-managed flow-log key is deferred to avoid a VPC/security module dependency cycle and additional development cost.
+  #checkov:skip=CKV_AWS_338:Flow-log retention is configurable by environment to balance investigation requirements and development cost.
   count = var.enable_flow_logs ? 1 : 0
 
   name              = "/aws/vpc/${var.name}/flow-logs"

@@ -53,7 +53,12 @@ resource "aws_kms_alias" "terraform_state" {
   target_key_id = aws_kms_key.terraform_state.key_id
 }
 
+
+
 resource "aws_s3_bucket" "terraform_state" {
+  #checkov:skip=CKV2_AWS_62:Terraform state changes do not require S3 event notifications; state access is controlled through IAM, encryption, versioning, and locking.
+  #checkov:skip=CKV_AWS_18:S3 access logging is deferred until a dedicated centralized log-archive bucket is implemented; Terraform state access remains auditable through AWS CloudTrail.
+  #checkov:skip=CKV_AWS_144:Cross-region replication is deferred because this portfolio deployment uses a single region; state versioning and lifecycle retention provide local recovery.
   bucket        = local.state_bucket_name
   force_destroy = false
 

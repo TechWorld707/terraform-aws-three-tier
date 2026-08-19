@@ -138,4 +138,5 @@ jobs:
           quiet: true
           soft_fail: false
           download_external_modules: false
+          skip_path: modules/monitoring/tests/monitoring.tftest.hcl
           output_format: cli

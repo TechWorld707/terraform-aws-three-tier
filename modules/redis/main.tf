@@ -42,6 +42,7 @@ resource "aws_cloudwatch_log_group" "redis" {
 }
 
 resource "aws_elasticache_replication_group" "this" {
+  #checkov:skip=CKV2_AWS_50:Multi-AZ automatic failover is configurable by environment; production enables it with two cache nodes while development uses one node for cost control.
   replication_group_id = var.name
   description          = "Redis replication group for ${var.name}"
 

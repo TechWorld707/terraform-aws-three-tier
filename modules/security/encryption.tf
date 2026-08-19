@@ -86,6 +86,7 @@ resource "random_password" "database" {
 }
 
 resource "aws_secretsmanager_secret" "database_credentials" {
+  #checkov:skip=CKV2_AWS_57:Automatic rotation requires a rotation Lambda and is deferred; credentials remain encrypted with KMS and access is restricted.
   name                    = "${var.name}/database/credentials"
   description             = "Database credentials for ${var.name}"
   kms_key_id              = aws_kms_key.application.arn
@@ -118,6 +119,7 @@ resource "random_password" "redis" {
 }
 
 resource "aws_secretsmanager_secret" "redis_credentials" {
+  #checkov:skip=CKV2_AWS_57:Automatic rotation requires a rotation Lambda and is deferred; credentials remain encrypted with KMS and access is restricted.
   name                    = "${var.name}/redis/credentials"
   description             = "Redis authentication credentials for ${var.name}"
   kms_key_id              = aws_kms_key.application.arn

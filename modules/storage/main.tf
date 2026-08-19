@@ -19,6 +19,9 @@ resource "random_id" "bucket_suffix" {
 }
 
 resource "aws_s3_bucket" "submissions" {
+  #checkov:skip=CKV2_AWS_62:Submission objects are archived directly by the application and do not require an event-driven S3 consumer.
+  #checkov:skip=CKV_AWS_18:S3 access logging is deferred until a dedicated centralized log-archive bucket is implemented; application activity is recorded through centralized application logs.
+  #checkov:skip=CKV_AWS_144:Cross-region replication is deferred because this portfolio deployment uses a single region; versioning, lifecycle controls, and AWS Backup provide recovery.
   bucket        = local.bucket_name
   force_destroy = var.force_destroy
 
@@ -70,8 +73,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "submissions" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "submissions" {
-   #checkov:skip=CKV_AWS_300:The configuration below already aborts incomplete multipart uploads using a validated variable; this finding is a static-analysis false positive.
-   bucket = aws_s3_bucket.submissions.id
+  #checkov:skip=CKV_AWS_300:The configuration below already aborts incomplete multipart uploads using a validated variable; this finding is a static-analysis false positive.
+  bucket = aws_s3_bucket.submissions.id
 
   rule {
     id     = "submission-archive-retention"
