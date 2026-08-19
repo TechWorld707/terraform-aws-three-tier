@@ -1,4 +1,8 @@
 resource "aws_lb" "application" {
+  #checkov:skip=CKV2_AWS_20:CloudFront redirects viewers to HTTPS; ALB HTTPS redirection requires a domain and ACM certificate and is deferred until they are available.
+  #checkov:skip=CKV2_AWS_28:The ALB is reached through a CloudFront distribution protected by AWS WAF; direct ALB restriction is deferred until CloudFront origin authentication is implemented.
+  #checkov:skip=CKV_AWS_150:ALB deletion protection is disabled to support controlled teardown of temporary learning environments.
+  #checkov:skip=CKV_AWS_91:ALB access logging is deferred until a dedicated centralized log-archive bucket is implemented.
   name                       = substr("${var.name}-alb", 0, 32)
   internal                   = false
   load_balancer_type         = "application"
@@ -17,6 +21,7 @@ resource "aws_lb" "application" {
 }
 
 resource "aws_lb_target_group" "application" {
+  #checkov:skip=CKV_AWS_378:HTTP is used only between the ALB and ECS targets inside the VPC after TLS terminates at CloudFront; end-to-end TLS is deferred.
   name        = substr("${var.name}-app", 0, 32)
   port        = var.container_port
   protocol    = "HTTP"
@@ -50,6 +55,9 @@ resource "aws_lb_target_group" "application" {
 }
 
 resource "aws_lb_listener" "http" {
+  #checkov:skip=CKV2_AWS_20:CloudFront redirects viewers to HTTPS; ALB HTTPS redirection requires a domain and ACM certificate and is deferred until they are available.
+  #checkov:skip=CKV_AWS_103:TLS terminates at CloudFront using the current generated hostname; ALB TLS requires a domain and ACM certificate and is deferred.
+  #checkov:skip=CKV_AWS_2:CloudFront provides public HTTPS; ALB HTTPS will be enabled after a domain and ACM certificate are configured.
   load_balancer_arn = aws_lb.application.arn
   port              = 80
   protocol          = "HTTP"

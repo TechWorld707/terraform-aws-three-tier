@@ -3,6 +3,7 @@ data "aws_region" "current" {}
 resource "aws_cloudwatch_log_group" "application" {
   name              = "/aws/ecs/${var.name}/application"
   retention_in_days = var.log_retention_days
+  kms_key_id        = var.log_kms_key_arn
 
   tags = local.common_tags
 }

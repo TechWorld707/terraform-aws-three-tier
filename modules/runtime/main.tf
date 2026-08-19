@@ -25,6 +25,7 @@ locals {
 }
 
 resource "aws_secretsmanager_secret" "runtime" {
+  #checkov:skip=CKV2_AWS_57:Automatic rotation requires a rotation Lambda and is deferred; the runtime secret remains encrypted with KMS and access is restricted.
   name                    = "${var.name}/application/runtime"
   description             = "Runtime connection configuration for ${var.name}"
   kms_key_id              = var.kms_key_arn

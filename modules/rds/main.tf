@@ -20,13 +20,24 @@ resource "aws_db_subnet_group" "this" {
   )
 }
 
+
 resource "aws_db_parameter_group" "this" {
   name_prefix = "${var.name}-"
   family      = var.parameter_group_family
   description = "PostgreSQL parameters for ${var.name}"
 
+  parameter {
+    name         = "rds.force_ssl"
+    value        = "1"
+    apply_method = "immediate"
+  }
+
   dynamic "parameter" {
-    for_each = var.database_parameters
+    for_each = {
+      for name, value in var.database_parameters :
+      name => value
+      if name != "rds.force_ssl"
+    }
 
     content {
       name         = parameter.key
@@ -43,6 +54,7 @@ resource "aws_db_parameter_group" "this" {
 }
 
 resource "aws_cloudwatch_log_group" "rds" {
+  #checkov:skip=CKV_AWS_338:Log retention is configurable by environment; production uses the approved retention period while development uses a shorter cost-controlled period.
   for_each = var.log_exports
 
   name              = "/aws/rds/instance/${var.name}/${each.value}"
@@ -89,6 +101,11 @@ resource "aws_iam_role_policy_attachment" "enhanced_monitoring" {
 }
 
 resource "aws_db_instance" "this" {
+  #checkov:skip=CKV_AWS_157:Multi-AZ is configurable by environment; production enables it while development uses single-AZ for cost control.
+  #checkov:skip=CKV_AWS_353:Performance Insights is configurable because enabling it may add cost; CloudWatch metrics and database logs remain available.
+  #checkov:skip=CKV_AWS_293:Deletion protection is configurable by environment; production enables it while temporary environments permit controlled teardown.
+  #checkov:skip=CKV_AWS_118:Enhanced monitoring is configurable because it requires an additional IAM role and can add monitoring cost.
+
   identifier = var.name
 
   engine         = "postgres"

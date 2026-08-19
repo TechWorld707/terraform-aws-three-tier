@@ -1,4 +1,8 @@
+
 resource "aws_s3_bucket" "frontend" {
+  #checkov:skip=CKV2_AWS_62:The static frontend deployment does not require event-driven processing or S3 event notifications.
+  #checkov:skip=CKV_AWS_18:S3 access logging is deferred until a dedicated centralized log-archive bucket is implemented; CloudFront and WAF provide edge-level visibility.
+  #checkov:skip=CKV_AWS_144:Cross-region replication is deferred because this portfolio deployment uses a single region; versioning and lifecycle retention provide local recovery.
   bucket        = local.frontend_bucket_name
   force_destroy = var.frontend_force_destroy
 
@@ -36,13 +40,39 @@ resource "aws_s3_bucket_versioning" "frontend" {
   }
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+
+  rule {
+    id     = "frontend-version-retention"
+    status = "Enabled"
+
+    filter {}
+
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+
+  depends_on = [
+    aws_s3_bucket_versioning.frontend
+  ]
+}
+
 resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
   bucket = aws_s3_bucket.frontend.id
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      kms_master_key_id = var.kms_key_arn
+      sse_algorithm     = "aws:kms"
     }
+
+    bucket_key_enabled = true
   }
 }
 
@@ -56,7 +86,8 @@ resource "aws_s3_object" "frontend" {
   source_hash  = filemd5("${var.frontend_source_directory}/${each.key}")
   content_type = each.value
 
-  server_side_encryption = "AES256"
+  server_side_encryption = "aws:kms"
+  kms_key_id             = var.kms_key_arn
 
   depends_on = [
     aws_s3_bucket_ownership_controls.frontend,

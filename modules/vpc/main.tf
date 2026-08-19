@@ -67,10 +67,27 @@ resource "aws_vpc" "this" {
         length(var.private_application_subnet_cidrs) == length(var.availability_zones) &&
         length(var.isolated_database_subnet_cidrs) == length(var.availability_zones)
       )
+
       error_message = "Every subnet tier must contain exactly one CIDR block per Availability Zone."
     }
   }
 }
+
+resource "aws_default_security_group" "this" {
+  vpc_id = aws_vpc.this.id
+
+  ingress = []
+  egress  = []
+
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${var.name}-default-deny-all"
+    }
+  )
+}
+
+
 
 resource "aws_internet_gateway" "this" {
   vpc_id = aws_vpc.this.id

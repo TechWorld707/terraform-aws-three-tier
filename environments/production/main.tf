@@ -92,6 +92,7 @@ module "ecs" {
 
   ecr_force_delete = var.ecr_force_delete
   ecr_kms_key_arn  = module.security.application_kms_key_arn
+  log_kms_key_arn  = module.security.application_kms_key_arn
 
   container_environment = {
     AWS_REGION     = var.aws_region
@@ -118,6 +119,7 @@ module "edge" {
 
   name            = "${var.project_name}-${var.environment}"
   alb_domain_name = module.ecs.load_balancer_dns_name
+  kms_key_arn     = module.security.application_kms_key_arn
 
   frontend_source_directory = "${path.root}/../../frontend"
   frontend_force_destroy    = false

@@ -33,6 +33,7 @@ override_resource {
 variables {
   name                      = "test-platform-dev"
   alb_domain_name           = "test-alb.us-east-1.elb.amazonaws.com"
+  kms_key_arn               = "arn:aws:kms:us-east-1:123456789012:key/11111111-2222-3333-4444-555555555555"
   frontend_source_directory = "../../frontend"
   frontend_force_destroy    = true
 
@@ -93,10 +94,32 @@ run "edge_platform_plan" {
         one(
           aws_s3_bucket_server_side_encryption_configuration.frontend.rule
         ).apply_server_side_encryption_by_default
-      ).sse_algorithm == "AES256"
+      ).sse_algorithm == "aws:kms"
     )
 
-    error_message = "Frontend objects must use S3 encryption."
+    error_message = "Frontend objects must use KMS encryption."
+  }
+
+  assert {
+    condition = (
+      one(
+        one(
+          aws_s3_bucket_server_side_encryption_configuration.frontend.rule
+        ).apply_server_side_encryption_by_default
+      ).kms_master_key_id == var.kms_key_arn
+    )
+
+    error_message = "Frontend objects must use the configured customer-managed KMS key."
+  }
+
+  assert {
+    condition = (
+      one(
+        aws_s3_bucket_server_side_encryption_configuration.frontend.rule
+      ).bucket_key_enabled
+    )
+
+    error_message = "The frontend bucket must enable S3 Bucket Keys."
   }
 
   assert {

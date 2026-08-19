@@ -15,10 +15,33 @@ locals {
   }
 }
 
+data "aws_iam_policy_document" "terraform_state_kms" {
+  #checkov:skip=CKV_AWS_109:KMS key administration is restricted to this AWS account root principal.
+  #checkov:skip=CKV_AWS_111:KMS key administration requires write actions and is restricted to this AWS account root principal.
+  #checkov:skip=CKV_AWS_356:KMS key policies use Resource "*" to represent only the key to which the policy is attached.
+
+  statement {
+    sid    = "EnableAccountAdministration"
+    effect = "Allow"
+
+    principals {
+      type = "AWS"
+
+      identifiers = [
+        "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:root"
+      ]
+    }
+
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+}
+
 resource "aws_kms_key" "terraform_state" {
   description             = "Encrypts Terraform state for ${var.project_name}"
   deletion_window_in_days = 30
   enable_key_rotation     = true
+  policy                  = data.aws_iam_policy_document.terraform_state_kms.json
 
   lifecycle {
     prevent_destroy = true
@@ -30,7 +53,12 @@ resource "aws_kms_alias" "terraform_state" {
   target_key_id = aws_kms_key.terraform_state.key_id
 }
 
+
+
 resource "aws_s3_bucket" "terraform_state" {
+  #checkov:skip=CKV2_AWS_62:Terraform state changes do not require S3 event notifications; state access is controlled through IAM, encryption, versioning, and locking.
+  #checkov:skip=CKV_AWS_18:S3 access logging is deferred until a dedicated centralized log-archive bucket is implemented; Terraform state access remains auditable through AWS CloudTrail.
+  #checkov:skip=CKV_AWS_144:Cross-region replication is deferred because this portfolio deployment uses a single region; state versioning and lifecycle retention provide local recovery.
   bucket        = local.state_bucket_name
   force_destroy = false
 
@@ -41,10 +69,35 @@ resource "aws_s3_bucket" "terraform_state" {
 
 resource "aws_s3_bucket_versioning" "terraform_state" {
   bucket = aws_s3_bucket.terraform_state.id
+
   versioning_configuration {
     status = "Enabled"
   }
 }
+
+resource "aws_s3_bucket_lifecycle_configuration" "terraform_state" {
+  bucket = aws_s3_bucket.terraform_state.id
+
+  rule {
+    id     = "state-version-retention"
+    status = "Enabled"
+
+    filter {}
+
+    noncurrent_version_expiration {
+      noncurrent_days = 90
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+
+  depends_on = [
+    aws_s3_bucket_versioning.terraform_state
+  ]
+}
+
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
   bucket = aws_s3_bucket.terraform_state.id

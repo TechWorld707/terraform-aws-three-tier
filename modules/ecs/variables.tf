@@ -199,3 +199,10 @@ variable "container_image_tag" {
     error_message = "container_image_tag must be a valid Docker image tag."
   }
 }
+
+variable "log_kms_key_arn" {
+  description = "Optional KMS key ARN used to encrypt ECS CloudWatch logs."
+  type        = string
+  default     = null
+  nullable    = true
+}

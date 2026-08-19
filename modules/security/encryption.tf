@@ -1,6 +1,65 @@
+data "aws_caller_identity" "current" {}
+data "aws_partition" "current" {}
+data "aws_region" "current" {}
+
+data "aws_iam_policy_document" "application_kms" {
+  #checkov:skip=CKV_AWS_109:KMS key administration is restricted to this AWS account root principal.
+  #checkov:skip=CKV_AWS_111:KMS key administration requires write actions and is restricted to this AWS account root principal.
+  #checkov:skip=CKV_AWS_356:KMS key policies use Resource "*" to represent only the key to which the policy is attached.
+
+  statement {
+    sid    = "EnableAccountAdministration"
+    effect = "Allow"
+
+    principals {
+      type = "AWS"
+
+      identifiers = [
+        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+      ]
+    }
+
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "AllowCloudWatchLogsEncryption"
+    effect = "Allow"
+
+    principals {
+      type = "Service"
+
+      identifiers = [
+        "logs.${data.aws_region.current.region}.${data.aws_partition.current.dns_suffix}"
+      ]
+    }
+
+    actions = [
+      "kms:Decrypt",
+      "kms:DescribeKey",
+      "kms:Encrypt",
+      "kms:GenerateDataKey*",
+      "kms:ReEncrypt*"
+    ]
+
+    resources = ["*"]
+
+    condition {
+      test     = "ArnLike"
+      variable = "kms:EncryptionContext:aws:logs:arn"
+
+      values = [
+        "arn:${data.aws_partition.current.partition}:logs:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:log-group:*"
+      ]
+    }
+  }
+}
+
 resource "aws_kms_key" "application" {
   description             = "Encrypts application secrets and data for ${var.name}"
   deletion_window_in_days = var.kms_deletion_window_days
+  policy                  = data.aws_iam_policy_document.application_kms.json
   enable_key_rotation     = true
 
   tags = merge(
@@ -27,6 +86,7 @@ resource "random_password" "database" {
 }
 
 resource "aws_secretsmanager_secret" "database_credentials" {
+  #checkov:skip=CKV2_AWS_57:Automatic rotation requires a rotation Lambda and is deferred; credentials remain encrypted with KMS and access is restricted.
   name                    = "${var.name}/database/credentials"
   description             = "Database credentials for ${var.name}"
   kms_key_id              = aws_kms_key.application.arn
@@ -59,6 +119,7 @@ resource "random_password" "redis" {
 }
 
 resource "aws_secretsmanager_secret" "redis_credentials" {
+  #checkov:skip=CKV2_AWS_57:Automatic rotation requires a rotation Lambda and is deferred; credentials remain encrypted with KMS and access is restricted.
   name                    = "${var.name}/redis/credentials"
   description             = "Redis authentication credentials for ${var.name}"
   kms_key_id              = aws_kms_key.application.arn
