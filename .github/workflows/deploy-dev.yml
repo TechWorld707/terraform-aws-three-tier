@@ -1,0 +1,213 @@
+name: Deploy backend to development
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-development
+  cancel-in-progress: false
+
+env:
+  TERRAFORM_VERSION: "1.14.3"
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  ECS_CONTAINER_NAME: application
+
+jobs:
+  deploy:
+    name: Deploy backend application
+    runs-on: ubuntu-latest
+    environment: dev
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Authenticate to AWS through OIDC
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Initialize development state
+        run: |
+          terraform -chdir=environments/dev init \
+            -reconfigure \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="key=${{ vars.TF_STATE_KEY }}" \
+            -backend-config="region=${{ vars.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="kms_key_id=${{ vars.TF_STATE_KMS_KEY_ARN }}"
+
+      - name: Read deployment targets from Terraform
+        id: infrastructure
+        run: |
+          ecr_repository_url="$(
+            terraform -chdir=environments/dev output -raw ecr_repository_url
+          )"
+
+          ecs_cluster_name="$(
+            terraform -chdir=environments/dev output -raw ecs_cluster_name
+          )"
+
+          ecs_service_name="$(
+            terraform -chdir=environments/dev output -raw ecs_service_name
+          )"
+
+          alb_dns_name="$(
+            terraform -chdir=environments/dev output -raw application_load_balancer_dns_name
+          )"
+
+          {
+            echo "ecr_repository_url=${ecr_repository_url}"
+            echo "ecs_cluster_name=${ecs_cluster_name}"
+            echo "ecs_service_name=${ecs_service_name}"
+            echo "alb_dns_name=${alb_dns_name}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build immutable backend image
+        env:
+          IMAGE_URI: ${{ steps.infrastructure.outputs.ecr_repository_url }}:${{ github.sha }}
+        run: |
+          docker build \
+            --tag "$IMAGE_URI" \
+            backend
+
+      - name: Scan backend image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ steps.infrastructure.outputs.ecr_repository_url }}:${{ github.sha }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+
+      - name: Push image to Amazon ECR
+        env:
+          IMAGE_URI: ${{ steps.infrastructure.outputs.ecr_repository_url }}:${{ github.sha }}
+        run: docker push "$IMAGE_URI"
+
+      - name: Capture current ECS deployment
+        id: previous
+        env:
+          ECS_CLUSTER: ${{ steps.infrastructure.outputs.ecs_cluster_name }}
+          ECS_SERVICE: ${{ steps.infrastructure.outputs.ecs_service_name }}
+        run: |
+          previous_task_definition="$(
+            aws ecs describe-services \
+              --cluster "$ECS_CLUSTER" \
+              --services "$ECS_SERVICE" \
+              --query 'services[0].taskDefinition' \
+              --output text
+          )"
+
+          previous_desired_count="$(
+            aws ecs describe-services \
+              --cluster "$ECS_CLUSTER" \
+              --services "$ECS_SERVICE" \
+              --query 'services[0].desiredCount' \
+              --output text
+          )"
+
+          aws ecs describe-task-definition \
+            --task-definition "$previous_task_definition" \
+            --query taskDefinition \
+            > current-task-definition.json
+
+          {
+            echo "task_definition=${previous_task_definition}"
+            echo "desired_count=${previous_desired_count}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Render task definition with new image
+        id: render
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: current-task-definition.json
+          container-name: ${{ env.ECS_CONTAINER_NAME }}
+          image: ${{ steps.infrastructure.outputs.ecr_repository_url }}:${{ github.sha }}
+
+      - name: Register and deploy task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          cluster: ${{ steps.infrastructure.outputs.ecs_cluster_name }}
+          service: ${{ steps.infrastructure.outputs.ecs_service_name }}
+          wait-for-service-stability: false
+
+      - name: Start application tasks
+        env:
+          ECS_CLUSTER: ${{ steps.infrastructure.outputs.ecs_cluster_name }}
+          ECS_SERVICE: ${{ steps.infrastructure.outputs.ecs_service_name }}
+        run: |
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER" \
+            --service "$ECS_SERVICE" \
+            --desired-count 1 \
+            --force-new-deployment
+
+      - name: Wait for ECS service stability
+        env:
+          ECS_CLUSTER: ${{ steps.infrastructure.outputs.ecs_cluster_name }}
+          ECS_SERVICE: ${{ steps.infrastructure.outputs.ecs_service_name }}
+        run: |
+          aws ecs wait services-stable \
+            --cluster "$ECS_CLUSTER" \
+            --services "$ECS_SERVICE"
+
+      - name: Run application health check
+        env:
+          HEALTH_URL: http://${{ steps.infrastructure.outputs.alb_dns_name }}/health
+        run: |
+          for attempt in {1..12}; do
+            if curl \
+              --fail \
+              --silent \
+              --show-error \
+              --max-time 10 \
+              "$HEALTH_URL"; then
+              echo
+              echo "Application health check passed."
+              exit 0
+            fi
+
+            echo "Health check attempt ${attempt} failed; retrying in 10 seconds."
+            sleep 10
+          done
+
+          echo "Application health check failed."
+          exit 1
+
+      - name: Roll back failed deployment
+        if: failure() && steps.previous.outputs.task_definition != ''
+        env:
+          ECS_CLUSTER: ${{ steps.infrastructure.outputs.ecs_cluster_name }}
+          ECS_SERVICE: ${{ steps.infrastructure.outputs.ecs_service_name }}
+          PREVIOUS_TASK_DEFINITION: ${{ steps.previous.outputs.task_definition }}
+          PREVIOUS_DESIRED_COUNT: ${{ steps.previous.outputs.desired_count }}
+        run: |
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER" \
+            --service "$ECS_SERVICE" \
+            --task-definition "$PREVIOUS_TASK_DEFINITION" \
+            --desired-count "$PREVIOUS_DESIRED_COUNT" \
+            --force-new-deployment
+
+          aws ecs wait services-stable \
+            --cluster "$ECS_CLUSTER" \
+            --services "$ECS_SERVICE"
