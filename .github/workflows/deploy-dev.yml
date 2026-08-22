@@ -69,11 +69,25 @@ jobs:
             terraform -chdir=environments/dev output -raw application_load_balancer_dns_name
           )"
 
+
+          private_subnet_ids="$(
+            terraform -chdir=environments/dev output \
+              -json private_application_subnet_ids |
+            jq -r 'join(",")'
+          )"
+
+          ecs_security_group_id="$(
+            terraform -chdir=environments/dev output \
+              -raw ecs_security_group_id
+          )"
+
           {
             echo "ecr_repository_url=${ecr_repository_url}"
             echo "ecs_cluster_name=${ecs_cluster_name}"
             echo "ecs_service_name=${ecs_service_name}"
             echo "alb_dns_name=${alb_dns_name}"
+            echo "private_subnet_ids=${private_subnet_ids}"
+            echo "ecs_security_group_id=${ecs_security_group_id}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Log in to Amazon ECR
@@ -84,8 +98,9 @@ jobs:
           IMAGE_URI: ${{ steps.infrastructure.outputs.ecr_repository_url }}:${{ github.sha }}
         run: |
           docker build \
+            --file backend/Dockerfile \
             --tag "$IMAGE_URI" \
-            backend
+            .
 
       - name: Scan backend image
         uses: aquasecurity/trivy-action@v0.36.0
@@ -142,13 +157,21 @@ jobs:
           container-name: ${{ env.ECS_CONTAINER_NAME }}
           image: ${{ steps.infrastructure.outputs.ecr_repository_url }}:${{ github.sha }}
 
-      - name: Register and deploy task definition
+      - name: Run database migrations and deploy task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.render.outputs.task-definition }}
           cluster: ${{ steps.infrastructure.outputs.ecs_cluster_name }}
           service: ${{ steps.infrastructure.outputs.ecs_service_name }}
           wait-for-service-stability: false
+          run-task: true
+          wait-for-task-stopped: true
+          run-task-launch-type: FARGATE
+          run-task-subnets: ${{ steps.infrastructure.outputs.private_subnet_ids }}
+          run-task-security-groups: ${{ steps.infrastructure.outputs.ecs_security_group_id }}
+          run-task-assign-public-IP: DISABLED
+          run-task-container-overrides: >-
+            [{"name":"application","command":["python","migrate.py"]}]
 
       - name: Start application tasks
         env:
