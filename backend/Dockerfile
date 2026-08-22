@@ -38,4 +38,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"
 
-CMD ["gunicorn", "--bind=0.0.0.0:8080", "--workers=2", "--threads=4", "--access-logfile=-", "--error-logfile=-", "app:app"]
+CMD ["gunicorn", "--bind=0.0.0.0:8080", "--workers=2", "--threads=4", "--worker-tmp-dir=/dev/shm", "--access-logfile=-", "--error-logfile=-", "app:app"]
