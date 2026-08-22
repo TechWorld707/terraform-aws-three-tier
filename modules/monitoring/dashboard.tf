@@ -174,8 +174,10 @@ resource "aws_cloudwatch_dashboard" "this" {
             [
               "AWS/ElastiCache",
               "EngineCPUUtilization",
-              "ReplicationGroupId",
-              var.redis_replication_group_id,
+              "CacheClusterId",
+              var.redis_cache_cluster_id,
+              "CacheNodeId",
+              "0001",
               {
                 stat  = "Average"
                 label = "Engine CPU"
@@ -184,8 +186,10 @@ resource "aws_cloudwatch_dashboard" "this" {
             [
               "AWS/ElastiCache",
               "FreeableMemory",
-              "ReplicationGroupId",
-              var.redis_replication_group_id,
+              "CacheClusterId",
+              var.redis_cache_cluster_id,
+              "CacheNodeId",
+              "0001",
               {
                 stat  = "Average"
                 label = "Free memory"
@@ -194,8 +198,10 @@ resource "aws_cloudwatch_dashboard" "this" {
             [
               "AWS/ElastiCache",
               "CurrConnections",
-              "ReplicationGroupId",
-              var.redis_replication_group_id,
+              "CacheClusterId",
+              var.redis_cache_cluster_id,
+              "CacheNodeId",
+              "0001",
               {
                 stat  = "Average"
                 label = "Connections"
