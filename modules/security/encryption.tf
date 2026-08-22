@@ -24,6 +24,33 @@ data "aws_iam_policy_document" "application_kms" {
   }
 
   statement {
+    sid    = "AllowCloudFrontS3OriginEncryption"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    actions = [
+      "kms:Decrypt",
+      "kms:Encrypt",
+      "kms:GenerateDataKey*"
+    ]
+
+    resources = ["*"]
+
+    condition {
+      test     = "ArnLike"
+      variable = "AWS:SourceArn"
+
+      values = [
+        "arn:${data.aws_partition.current.partition}:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/*"
+      ]
+    }
+  }
+
+  statement {
     sid    = "AllowCloudWatchLogsEncryption"
     effect = "Allow"
 
