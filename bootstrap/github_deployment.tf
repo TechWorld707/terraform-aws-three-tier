@@ -1,4 +1,5 @@
 data "aws_iam_policy_document" "github_application_deployment" {
+  #checkov:skip=CKV_AWS_356:ECR authentication and ECS task-definition registration and inspection require wildcard resources because these actions cannot be reliably scoped to deployment-time resource ARNs.
   for_each = var.environments
 
   statement {
@@ -66,7 +67,7 @@ data "aws_iam_policy_document" "github_application_deployment" {
     resources = ["*"]
   }
 
-    statement {
+  statement {
     sid    = "RunDatabaseMigrationTask"
     effect = "Allow"
 
