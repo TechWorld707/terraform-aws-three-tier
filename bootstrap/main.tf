@@ -173,7 +173,9 @@ data "aws_iam_policy_document" "github_trust" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${local.repository}:environment:${each.key}"]
+      values = [
+        "${var.github_oidc_subject_prefix}:environment:${each.key}"
+      ]
     }
   }
 }
