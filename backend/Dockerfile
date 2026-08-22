@@ -16,7 +16,7 @@ RUN groupadd --system app \
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY backend/requirements.txt ./requirements.txt
 
 # Use the current pip release to install dependencies, then remove pip and
 # its vendored packages because package installation is unnecessary at runtime.
@@ -29,7 +29,9 @@ RUN python -m pip install \
     && python -m pip uninstall \
     --yes pip
 
-COPY app.py ./
+COPY backend/app.py ./
+COPY backend/migrate.py ./
+COPY database/migrations ./migrations
 
 USER app
 

@@ -66,6 +66,39 @@ data "aws_iam_policy_document" "github_application_deployment" {
     resources = ["*"]
   }
 
+    statement {
+    sid    = "RunDatabaseMigrationTask"
+    effect = "Allow"
+
+    actions = [
+      "ecs:RunTask"
+    ]
+
+    resources = [
+      "arn:${data.aws_partition.current.partition}:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:task-definition/${var.project_name}-${each.key}-application:*"
+    ]
+
+    condition {
+      test     = "ArnEquals"
+      variable = "ecs:cluster"
+
+      values = [
+        "arn:${data.aws_partition.current.partition}:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:cluster/${var.project_name}-${each.key}"
+      ]
+    }
+  }
+
+  statement {
+    sid    = "DescribeDatabaseMigrationTasks"
+    effect = "Allow"
+
+    actions = [
+      "ecs:DescribeTasks"
+    ]
+
+    resources = ["*"]
+  }
+
   statement {
     sid    = "PassECSTaskRoles"
     effect = "Allow"
