@@ -97,7 +97,8 @@ locals {
       comparison_operator = "GreaterThanOrEqualToThreshold"
 
       dimensions = {
-        ReplicationGroupId = var.redis_replication_group_id
+        CacheClusterId = var.redis_cache_cluster_id
+        CacheNodeId    = "0001"
       }
     }
 
@@ -111,7 +112,8 @@ locals {
       comparison_operator = "LessThanOrEqualToThreshold"
 
       dimensions = {
-        ReplicationGroupId = var.redis_replication_group_id
+        CacheClusterId = var.redis_cache_cluster_id
+        CacheNodeId    = "0001"
       }
     }
   }

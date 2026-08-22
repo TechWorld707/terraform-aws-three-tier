@@ -36,8 +36,8 @@ variables {
   load_balancer_arn_suffix = "app/test-platform-dev/1234567890abcdef"
   target_group_arn_suffix  = "targetgroup/test-platform-dev/1234567890abcdef"
 
-  rds_instance_id            = "test-platform-dev-postgres"
-  redis_replication_group_id = "test-platform-dev-redis"
+  rds_instance_id        = "test-platform-dev-postgres"
+  redis_cache_cluster_id = "test-platform-dev-redis-001"
 
   ecs_cpu_threshold                 = 80
   ecs_memory_threshold              = 80

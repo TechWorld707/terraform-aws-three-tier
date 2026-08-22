@@ -149,8 +149,8 @@ module "monitoring" {
   load_balancer_arn_suffix = module.ecs.load_balancer_arn_suffix
   target_group_arn_suffix  = module.ecs.target_group_arn_suffix
 
-  rds_instance_id            = module.rds.db_instance_id
-  redis_replication_group_id = module.redis.replication_group_id
+  rds_instance_id        = module.rds.db_instance_id
+  redis_cache_cluster_id = module.redis.primary_cache_cluster_id
 
   ecs_cpu_threshold    = 80
   ecs_memory_threshold = 80

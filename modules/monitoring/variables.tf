@@ -58,8 +58,8 @@ variable "rds_instance_id" {
   type        = string
 }
 
-variable "redis_replication_group_id" {
-  description = "ElastiCache Redis replication-group identifier."
+variable "redis_cache_cluster_id" {
+  description = "ElastiCache Redis cache-cluster identifier used for node-level CloudWatch metrics."
   type        = string
 }
 

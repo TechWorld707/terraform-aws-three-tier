@@ -8,6 +8,13 @@ output "replication_group_arn" {
   value       = aws_elasticache_replication_group.this.arn
 }
 
+output "primary_cache_cluster_id" {
+  description = "ID of the primary Redis cache cluster used for node-level CloudWatch metrics."
+  value = sort(
+    tolist(aws_elasticache_replication_group.this.member_clusters)
+  )[0]
+}
+
 output "primary_endpoint_address" {
   description = "Private primary endpoint used for Redis writes."
   value       = aws_elasticache_replication_group.this.primary_endpoint_address
