@@ -45,16 +45,14 @@ data "aws_iam_policy_document" "github_application_deployment" {
   }
 
   statement {
-    sid    = "ReadTaskDefinitionRevisions"
+    sid    = "DescribeTaskDefinitions"
     effect = "Allow"
 
     actions = [
       "ecs:DescribeTaskDefinition"
     ]
 
-    resources = [
-      "arn:${data.aws_partition.current.partition}:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:task-definition/${var.project_name}-${each.key}-application:*"
-    ]
+    resources = ["*"]
   }
 
   statement {
