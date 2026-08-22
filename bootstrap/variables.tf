@@ -32,6 +32,12 @@ variable "github_repository" {
   default     = "terraform-aws-three-tier"
 }
 
+variable "github_oidc_subject_prefix" {
+  description = "Immutable GitHub Actions OIDC subject prefix containing the owner and repository IDs."
+  type        = string
+  default     = "repo:TechWorld707@313882919/terraform-aws-three-tier@1333062767"
+}
+
 variable "environments" {
   description = "GitHub environments that receive separate AWS deployment roles."
   type        = set(string)
